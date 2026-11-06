@@ -1,0 +1,28 @@
+PASS Runtime started; graphics=NVIDIA GeForce RTX 5060; OS=Windows 10  (10.0.19044) 64bit
+PASS Pause freezes physical hook and mission clock
+PASS Mission 0 reset state
+PASS Mission 0 cargo 0 low-speed physical latch
+PASS Stable supported release; damage=0.0
+PASS Mission 0 cargo 0 stable delivery
+PASS Mission 0 complete physical route
+PASS Mission 1 reset state
+PASS Mission 1 cargo 0 low-speed physical latch
+PASS Stable supported release; damage=0.0
+PASS Mission 1 cargo 0 stable delivery
+PASS Mission 1 complete physical route
+PASS Mission 2 reset state
+PASS Mission 2 cargo 0 low-speed physical latch
+PASS Stable supported release; damage=0.0
+PASS Relay release preserves pending final delivery
+PASS Relay reattach
+PASS Stable supported release; damage=0.0
+PASS Mission 2 cargo 0 stable delivery
+PASS Mission 2 complete physical route
+PASS Mission 3 reset state
+PASS Mission 3 cargo 0 low-speed physical latch
+PASS Stable supported release; damage=0.0
+PASS Mission 3 cargo 0 stable delivery
+PASS Mission 3 cargo 1 low-speed physical latch
+PASS Stable supported release; damage=0.0
+PASS Mission 3 cargo 1 stable delivery
+PASS Mission 3 complete physical route

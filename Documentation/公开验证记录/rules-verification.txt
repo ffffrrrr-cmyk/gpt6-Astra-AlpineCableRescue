@@ -1,0 +1,23 @@
+PASS Pause freezes clock
+PASS Paused delivery rejected
+PASS Delivery idempotence
+PASS Win after all unique cargo
+PASS Terminal win immutable
+PASS Timed failure
+PASS Practice and reset
+PASS Save write
+PASS Save round trip
+PASS Corrupt save recovery
+PASS Mission 0 data valid
+PASS Pickup reachable 0
+PASS Destination reachable 0
+PASS Mission 1 data valid
+PASS Pickup reachable 1
+PASS Destination reachable 1
+PASS Mission 2 data valid
+PASS Pickup reachable 2
+PASS Destination reachable 2
+PASS Mission 3 data valid
+PASS Pickup reachable 3
+PASS Pickup reachable 3
+PASS Destination reachable 3
