@@ -12,6 +12,9 @@ namespace Frostline
         IEnumerator Start()
         {
             string output = Path.GetFullPath(Path.Combine(Application.dataPath, "../Logs"));
+            var arguments = System.Environment.GetCommandLineArgs();
+            int outputArgument = System.Array.IndexOf(arguments, "--capture-output");
+            if (outputArgument >= 0 && outputArgument + 1 < arguments.Length) output = Path.GetFullPath(arguments[outputArgument + 1]);
             Directory.CreateDirectory(output);
             Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
             yield return new WaitForSecondsRealtime(3);
@@ -27,6 +30,33 @@ namespace Frostline
                 yield return Capture(output, "mission-" + mission);
                 yield return new WaitForSecondsRealtime(0.5f);
             }
+            Game.Begin(0, true); Game.Crane.ExternalControl = true;
+            Game.View.Mode = 2; Game.View.Snap();
+            yield return new WaitForSecondsRealtime(1);
+            yield return Capture(output, "terrain-overhead");
+            Game.View.enabled = false;
+            Camera.main.transform.position = new Vector3(18, 5, 20);
+            Camera.main.transform.LookAt(new Vector3(0, -8, -5));
+            yield return new WaitForSecondsRealtime(1);
+            yield return Capture(output, "terrain-cliff-detail");
+            Camera.main.transform.position = new Vector3(29, 4, 11);
+            Camera.main.transform.LookAt(new Vector3(33, 0, 1));
+            yield return new WaitForSecondsRealtime(1);
+            yield return Capture(output, "terrain-snow-detail");
+            Camera.main.transform.position = new Vector3(8, 31, 67);
+            Camera.main.transform.LookAt(new Vector3(0, 2, 12));
+            yield return new WaitForSecondsRealtime(1);
+            yield return Capture(output, "terrain-supports");
+            Camera.main.transform.position = AlpineVegetation.DetailTarget + new Vector3(5, 1.2f, 7);
+            Camera.main.transform.LookAt(AlpineVegetation.DetailTarget);
+            yield return new WaitForSecondsRealtime(1);
+            yield return Capture(output, "vegetation-tree");
+            Camera.main.transform.position = AlpineVegetation.DetailTarget + new Vector3(1.7f, 0.5f, 2.2f);
+            Camera.main.transform.LookAt(AlpineVegetation.DetailTarget);
+            yield return new WaitForSecondsRealtime(1);
+            yield return Capture(output, "vegetation-branches");
+            Game.View.enabled = true; Game.View.Mode = 0; Game.View.Snap();
+            Game.Begin(3, true); Game.Crane.ExternalControl = true;
             var frames = new List<float>(); float end = Time.realtimeSinceStartup + 12;
             while (Time.realtimeSinceStartup < end)
             {

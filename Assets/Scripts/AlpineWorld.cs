@@ -13,17 +13,9 @@ namespace Frostline
             var darkRock = MechanicalArt.Metal("DeepSlate", new Color(0.10f, 0.17f, 0.21f), 0, 0.14f);
             var pine = MechanicalArt.Metal("Pine", new Color(0.06f, 0.18f, 0.18f), 0, 0.2f);
             var concrete = MechanicalArt.Metal("Concrete", new Color(0.37f, 0.43f, 0.43f), 0, 0.3f);
-            Mountain(root, new Vector3(0, -12, -9), new Vector3(15, 13, 19), 19, rock);
-            Mountain(root, new Vector3(-25, -22, 14), new Vector3(17, 23, 24), 25, darkRock);
-            Mountain(root, new Vector3(27, -20, 20), new Vector3(17, 19, 22), 31, darkRock);
-            for (int peak = 0; peak < 13; peak++)
-            {
-                float angle = (-40 + peak * 20) * Mathf.Deg2Rad;
-                var position = new Vector3(Mathf.Cos(angle) * 88, -22, Mathf.Sin(angle) * 85 + 17);
-                Mountain(root, position, new Vector3(24, 42 + peak % 4 * 8, 26), peak * 23 + 7, peak % 2 == 0 ? rock : darkRock);
-            }
+            AlpineTerrain.Build(root);
             MechanicalArt.Box("CraneFoundation", root, new Vector3(0, -0.45f, 0), new Vector3(8, 0.9f, 8), concrete, true);
-            MechanicalArt.Box("SnowLedge", root, new Vector3(0, -0.05f, -5.8f), new Vector3(10, 0.15f, 4), MechanicalArt.Snow);
+
             var asphalt = MechanicalArt.Metal("DeckCoating", new Color(0.15f, 0.23f, 0.26f), 0.25f, 0.32f);
             MechanicalArt.Box("DeckTop", root, new Vector3(0, 0.015f, 0), new Vector3(7.8f, 0.08f, 7.8f), asphalt);
             for (int stripe = 0; stripe < 9; stripe++)
@@ -41,22 +33,7 @@ namespace Frostline
             MechanicalArt.Box("SnowRoof", hut, new Vector3(0, 1.4f, 0), new Vector3(3.4f, 0.35f, 3.9f), MechanicalArt.Snow);
             MechanicalArt.Box("Window", hut, new Vector3(0, 0.25f, 1.78f), new Vector3(2.2f, 0.95f, 0.04f), MechanicalArt.Teal);
             MechanicalArt.Bar("Antenna", hut, new Vector3(0.8f, 1.5f, 0), new Vector3(0.8f, 4.5f, 0), 0.035f, MechanicalArt.Silver);
-            var random = new System.Random(127);
-            for (int tree = 0; tree < 42; tree++)
-            {
-                float horizontal = (float)random.NextDouble() * 32 - 16;
-                float depth = -10 - (float)random.NextDouble() * 22;
-                float height = 2.5f + (float)random.NextDouble() * 3.5f;
-                var position = new Vector3(horizontal, -2 - Mathf.Abs(horizontal) * 0.12f, depth);
-                MechanicalArt.Bar("Trunk", root, position, position + Vector3.up * height, 0.12f, darkRock);
-                for (int layer = 0; layer < 3; layer++)
-                {
-                    var crown = new GameObject("PineCrown", typeof(MeshFilter), typeof(MeshRenderer));
-                    crown.transform.SetParent(root, false); crown.transform.localPosition = position + Vector3.up * (height * (0.22f + layer * 0.19f));
-                    crown.GetComponent<MeshFilter>().sharedMesh = Cone(height * (0.31f - layer * 0.05f), height * 0.55f);
-                    crown.GetComponent<Renderer>().sharedMaterial = layer == 2 ? MechanicalArt.Snow : pine;
-                }
-            }
+            AlpineVegetation.Build(root);
             var cableMaterial = MechanicalArt.Steel;
             for (int side = -1; side <= 1; side += 2)
             {
@@ -91,7 +68,8 @@ namespace Frostline
                 var rock = MechanicalArt.Metal("ObstacleRock", new Color(0.23f, 0.31f, 0.32f), 0, 0.2f);
                 var body = MechanicalArt.Box("CollisionRidge", root, obstacle, new Vector3(3.4f, 6, 3.2f), rock, true);
                 body.transform.localRotation = Quaternion.Euler(0, 15, 0);
-                Mountain(root, obstacle + Vector3.down * 3, new Vector3(3.4f, 6.8f, 3.4f), 72, rock);
+                body.GetComponent<Renderer>().enabled = false;
+                AlpineTerrain.BuildRockSpur(root, obstacle);
             }
         }
         static void CableCar(Transform root, Vector3 position)
@@ -117,6 +95,7 @@ namespace Frostline
         }
         static void Platform(Transform root, LandingSite site, Material signal, string name)
         {
+            AlpineTerrain.BuildFooting(root, site.Center);
             var deck = MechanicalArt.Group(name, root, site.Center);
             MechanicalArt.Box("Deck", deck, new Vector3(0, -0.3f, 0), new Vector3(5.6f, 0.6f, 5.6f), MechanicalArt.Steel, true);
             MechanicalArt.Box("LandingInset", deck, new Vector3(0, 0.025f, 0), new Vector3(3.8f, 0.04f, 3.8f), MechanicalArt.Metal("LandingPaint", new Color(0.25f, 0.35f, 0.37f), 0.2f, 0.25f));
@@ -131,21 +110,6 @@ namespace Frostline
             }
             MechanicalArt.Box("LandingCrossA", deck, new Vector3(0, 0.08f, 0), new Vector3(1, 0.02f, 0.12f), signal);
             MechanicalArt.Box("LandingCrossB", deck, new Vector3(0, 0.08f, 0), new Vector3(0.12f, 0.02f, 1), signal);
-        }
-        static Mesh Cone(float radius, float height)
-        {
-            const int sides = 10;
-            var vertices = new List<Vector3>(); var triangles = new List<int>();
-            for (int side = 0; side < sides; side++)
-            {
-                float angle = side * Mathf.PI * 2 / sides; float next = (side + 1) * Mathf.PI * 2 / sides;
-                int start = vertices.Count;
-                vertices.Add(new Vector3(Mathf.Cos(angle) * radius, 0, Mathf.Sin(angle) * radius));
-                vertices.Add(Vector3.up * height);
-                vertices.Add(new Vector3(Mathf.Cos(next) * radius, 0, Mathf.Sin(next) * radius));
-                triangles.Add(start); triangles.Add(start + 1); triangles.Add(start + 2);
-            }
-            var mesh = new Mesh { name = "PineCrownMesh" }; mesh.SetVertices(vertices); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); return mesh;
         }
         static void Mountain(Transform root, Vector3 position, Vector3 scale, int seed, Material rock)
         {
@@ -187,3 +151,4 @@ namespace Frostline
         }
     }
 }
+

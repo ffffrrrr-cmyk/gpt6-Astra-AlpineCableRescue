@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $deliveryRoot = Join-Path $projectRoot 'Delivery'
 New-Item -ItemType Directory -Force -Path $deliveryRoot | Out-Null
-$sourceNames = @('Assets', 'Packages', 'ProjectSettings', 'Documentation', 'ThirdPartyNotices', 'README.md', 'LICENSE.md', 'NOTICE.md', 'Build.ps1', 'Run.ps1', 'Package.ps1', '.gitignore')
+$sourceNames = @('Assets', 'Packages', 'ProjectSettings', 'Documentation', 'ThirdPartyNotices', 'README.md', 'LICENSE.md', 'NOTICE.md', 'Build.ps1', 'Run.ps1', 'RebuildTerrain.ps1', 'RebuildVegetation.ps1', 'Package.ps1', '.gitignore')
 $sourcePaths = @($sourceNames | ForEach-Object { Join-Path $projectRoot $_ } | Where-Object { Test-Path -LiteralPath $_ })
 $sourceArchive = Join-Path $deliveryRoot 'U1_FrostlineRescue_Source.zip'
 Compress-Archive -LiteralPath $sourcePaths -DestinationPath $sourceArchive -CompressionLevel Optimal -Force

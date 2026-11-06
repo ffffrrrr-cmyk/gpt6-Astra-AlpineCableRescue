@@ -1,0 +1,10 @@
+Capture validity: nonblack frames observed; visual review required
+GPU: NVIDIA GeForce RTX 5060
+OS: Windows 10  (10.0.19044) 64bit
+Resolution: 1920x1080
+Quality: standard; target 60 FPS
+Scenario: Mission 4 idle, two cargo bodies on pickup decks, static overview
+Samples: 719
+Average FPS: 59.2
+95th-percentile frame ms: 17.02
+This is an automated idle-scene sample, not a full gameplay performance guarantee.
