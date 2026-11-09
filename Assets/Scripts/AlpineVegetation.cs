@@ -67,18 +67,34 @@ namespace Frostline
             var random = new System.Random(Seed);
             var forest = new GameObject("SnowLoadedSpruceForest_" + Seed).transform; forest.SetParent(parent, false);
             var bark = new Geometry(); var needles = new Geometry(); var snow = new Geometry(); var rime = new Geometry();
-            var accepted = new List<Vector3>(); int rejected = 0;
-            for (int candidate = 0; candidate < 130 && accepted.Count < 28; candidate++)
+            var accepted = new List<Vector3>(); var heights = new List<float>(); var details = new List<int>();
+            int candidates = 0;
+            int leftAccepted = 0; int leftRejected = 0; int northeastAccepted = 0; int northeastRejected = 0;
+            SeedWindow(-13, 13, -30, -12, 30, 2.6f, 3.8f, 7.2f, 0, ref leftAccepted, ref leftRejected);
+            SeedWindow(-42, -10, -48, -12, 50, 2.8f, 3.2f, 6.0f, 1, ref northeastAccepted, ref northeastRejected);
+            for (int tree = 0; tree < accepted.Count; tree++)
+                BuildTree(random, accepted[tree], heights[tree], details[tree], bark, needles, snow, rime);
+
+            void SeedWindow(float minX, float maxX, float minZ, float maxZ, int target, float spacing, float minHeight, float maxHeight, int detail, ref int count, ref int rejected)
             {
-                float horizontal = Range(random, -13, 13); float depth = Range(random, -30, -12);
-                float height = Range(random, 3.8f, 7.2f); float crownRadius = height * 0.29f + 0.7f;
-                Vector3 position = new Vector3(horizontal, AlpineTerrain.SurfaceHeight(horizontal, depth) - 0.12f, depth);
-                bool blocked = depth + crownRadius > -8 || position.y < -6;
-                foreach (Vector3 other in accepted) if (Vector2.Distance(new Vector2(other.x, other.z), new Vector2(horizontal, depth)) < 3.0f) blocked = true;
-                if (blocked) { rejected++; continue; }
-                accepted.Add(position);
-                if (accepted.Count == 1) DetailTarget = position + Vector3.up * height * 0.52f;
-                BuildTree(random, position, height, bark, needles, snow, rime);
+                while (candidates < 600 && count < target)
+                {
+                    candidates++;
+                    float horizontal = Range(random, minX, maxX); float depth = Range(random, minZ, maxZ);
+                    float height = Range(random, minHeight, maxHeight);
+                    if (detail > 0) height = Mathf.Lerp(minHeight, maxHeight, Mathf.Sqrt(Mathf.InverseLerp(minHeight, maxHeight, height)));
+                    float crownRadius = height * 0.29f + 0.7f;
+                    float surfaceHeight = AlpineTerrain.SurfaceHeight(horizontal, depth);
+                    float slope = Mathf.Abs(AlpineTerrain.SurfaceHeight(horizontal + 0.8f, depth) - surfaceHeight)
+                        + Mathf.Abs(AlpineTerrain.SurfaceHeight(horizontal, depth + 0.8f) - surfaceHeight);
+                    Vector3 position = new Vector3(horizontal, surfaceHeight - 0.12f, depth);
+                    bool blocked = depth + crownRadius > -8 || surfaceHeight < -6 || slope > 1.6f;
+                    foreach (Vector3 other in accepted)
+                        if (Vector2.Distance(new Vector2(other.x, other.z), new Vector2(horizontal, depth)) < spacing) blocked = true;
+                    if (blocked) { rejected++; continue; }
+                    accepted.Add(position); heights.Add(height); details.Add(detail); count++;
+                    if (accepted.Count == 1) DetailTarget = position + Vector3.up * height * 0.52f;
+                }
             }
             var barkMaterial = MechanicalArt.Metal("SpruceBark", new Color(0.19f, 0.15f, 0.12f), 0, 0.12f);
             var needleMaterial = MechanicalArt.Metal("SpruceNeedles", new Color(0.095f, 0.18f, 0.135f), 0, 0.18f);
@@ -87,18 +103,22 @@ namespace Frostline
             var rimeMaterial = MechanicalArt.Metal("WindwardRime", new Color(0.54f, 0.69f, 0.76f), 0, 0.26f); rimeMaterial.SetFloat("_Cull", 0);
             bark.Publish(forest, "CurvedTrunksAndBoughs", barkMaterial); needles.Publish(forest, "IndividualNeedleSprays", needleMaterial);
             snow.Publish(forest, "DiscontinuousSnowLoads", snowMaterial); rime.Publish(forest, "WindwardIceNeedles", rimeMaterial);
-            Debug.Log("VEGETATION_LAYOUT_PASS seed=" + Seed + " trees=" + accepted.Count + " rejected=" + rejected + " canopyZ<=-8; operational corridor z>=-7; no colliders");
+            Debug.Log("VEGETATION_LAYOUT_PASS seed=" + Seed + " trees=" + accepted.Count + " left accepted=" + leftAccepted + " rejected=" + leftRejected
+                + " visualRight accepted=" + northeastAccepted + " rejected=" + northeastRejected + " candidates=" + candidates + "; canopyZ<=-8; operational corridor z>=-7; no colliders");
+            if (leftAccepted != 30 || northeastAccepted != 50) Debug.LogWarning("VEGETATION_LAYOUT_SHORTFALL expected left=30 northeast=50");
         }
-        static void BuildTree(System.Random random, Vector3 origin, float height, Geometry bark, Geometry needles, Geometry snow, Geometry rime)
+        static void BuildTree(System.Random random, Vector3 origin, float height, int detail, Geometry bark, Geometry needles, Geometry snow, Geometry rime)
         {
             float lean = Range(random, -0.18f, 0.18f); float phase = Range(random, 0, 6.28f);
             Vector3 Trunk(float progress) { return origin + new Vector3(lean * progress * progress, height * progress, Mathf.Sin(progress * 2) * 0.09f); }
             for (int segment = 0; segment < 14; segment++)
                 bark.Tube(Trunk(segment / 14f), Trunk((segment + 1) / 14f), Mathf.Lerp(height * 0.025f, 0.018f, segment / 14f), Mathf.Lerp(height * 0.025f, 0.018f, (segment + 1) / 14f));
-            int layers = 16;
+            int layers = detail == 0 ? 16 : 11;
+            int twigs = detail == 0 ? 8 : 5;
+            int needleCount = detail == 0 ? 22 : 12;
             for (int layer = 0; layer < layers; layer++)
             {
-                float rise = 0.10f + layer * 0.058f;
+                float rise = 0.10f + layer * (0.87f / (layers - 1));
                 int branches = random.Next(4, 7);
                 for (int branch = 0; branch < branches; branch++)
                 {
@@ -111,9 +131,9 @@ namespace Frostline
                     Vector3 start = Trunk(rise) + Vector3.up * Range(random, -0.12f, 0.12f);
                     Vector3 Bough(float progress) { return start + outward * (progress * length) + Vector3.up * (length * (0.12f * progress - load * 0.48f * progress * progress)); }
                     for (int segment = 0; segment < 5; segment++) bark.Tube(Bough(segment / 5f), Bough((segment + 1) / 5f), 0.035f * (1 - segment / 6f), 0.035f * (1 - (segment + 1) / 6f));
-                    for (int twig = 0; twig < 8; twig++)
+                    for (int twig = 0; twig < twigs; twig++)
                     {
-                        float progress = 0.20f + twig * 0.095f;
+                        float progress = 0.20f + twig * (0.665f / (twigs - 1));
                         for (int side = -1; side <= 1; side += 2)
                         {
                             Vector3 root = Bough(progress);
@@ -122,9 +142,9 @@ namespace Frostline
                             Vector3 tip = root + direction * twigLength + Vector3.down * (0.12f + load * 0.12f);
                             bark.Tube(root, tip, 0.009f, 0.003f);
                             Vector3 axis = (tip - root).normalized; Vector3 cross = Vector3.Cross(axis, Vector3.up).normalized;
-                            for (int needle = 0; needle < 22; needle++)
+                            for (int needle = 0; needle < needleCount; needle++)
                             {
-                                float along = needle / 22f;
+                                float along = needle / (float)needleCount;
                                 Vector3 center = Vector3.Lerp(root, tip, along);
                                 float needleLength = Range(random, 0.04f, 0.095f) * (1 - along * 0.35f);
                                 for (int spray = 0; spray < 5; spray++)
