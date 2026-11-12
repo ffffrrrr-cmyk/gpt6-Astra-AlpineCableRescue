@@ -1,0 +1,12 @@
+<linker>
+  <!-- Unity WebGL 构建按引用裁剪引擎代码；以下模块的组件在运行时代码中动态添加，
+       序列化数据里看不到引用，必须显式保留，否则运行时报
+       "Can't add component because class doesn't exist"。 -->
+  <assembly fullname="UnityEngine.PhysicsModule" preserve="all"/>
+  <assembly fullname="UnityEngine.Physics2DModule" preserve="all"/>
+  <assembly fullname="UnityEngine.AnimationModule" preserve="all"/>
+  <assembly fullname="UnityEngine.ParticleSystemModule" preserve="all"/>
+  <assembly fullname="UnityEngine.AudioModule" preserve="all"/>
+  <assembly fullname="UnityEngine.TerrainModule" preserve="all"/>
+  <assembly fullname="UnityEngine.IMGUIModule" preserve="all"/>
+</linker>
